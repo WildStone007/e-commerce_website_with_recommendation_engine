@@ -1,0 +1,267 @@
+{% extends "base.html" %}
+
+{% block title %}Purchase History{% endblock %}
+
+{% block content %}
+<!-- Breadcrumb -->
+<nav aria-label="breadcrumb" class="mb-4">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{{ url_for('home') }}">Home</a></li>
+        <li class="breadcrumb-item"><a href="{{ url_for('user.profile') }}">Profile</a></li>
+        <li class="breadcrumb-item active">Purchase History</li>
+    </ol>
+</nav>
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="h2">Purchase History</h1>
+    <a href="{{ url_for('product.index') }}" class="btn btn-primary">
+        <i class="fas fa-shopping-basket me-2"></i> Continue Shopping
+    </a>
+</div>
+
+{% if orders %}
+<!-- Statistics Cards -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card text-center h-100">
+            <div class="card-body">
+                <div class="display-6 mb-3">
+                    <i class="fas fa-shopping-bag text-primary"></i>
+                </div>
+                <h6 class="card-subtitle mb-2 text-muted">Total Orders</h6>
+                {% if statistics is defined %}
+                <h3 class="mb-0 text-primary">{{ statistics.total_orders }}</h3>
+                {% else %}
+                <h3 class="mb-0 text-primary">{{ orders|length }}</h3>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center h-100">
+            <div class="card-body">
+                <div class="display-6 mb-3">
+                    <i class="fas fa-dollar-sign text-success"></i>
+                </div>
+                <h6 class="card-subtitle mb-2 text-muted">Total Spent</h6>
+                {% if statistics is defined and statistics.total_spent is defined %}
+                <h3 class="mb-0 text-success">${{ statistics.total_spent|round(2) }}</h3>
+                {% else %}
+                <h3 class="mb-0 text-success">${{ orders|sum(attribute='total_price')|default(0)|round(2) }}</h3>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center h-100">
+            <div class="card-body">
+                <div class="display-6 mb-3">
+                    <i class="fas fa-chart-line text-info"></i>
+                </div>
+                <h6 class="card-subtitle mb-2 text-muted">Average Order Value</h6>
+                {% if statistics is defined and statistics.avg_order_value is defined %}
+                <h3 class="mb-0 text-info">${{ statistics.avg_order_value|round(2) }}</h3>
+                {% else %}
+                {% if orders|length > 0 %}
+                <h3 class="mb-0 text-info">${{ (orders|sum(attribute='total_price') / orders|length)|round(2) }}</h3>
+                {% else %}
+                <h3 class="mb-0 text-info">$0.00</h3>
+                {% endif %}
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center h-100">
+            <div class="card-body">
+                <div class="display-6 mb-3">
+                    <i class="fas fa-check-circle text-warning"></i>
+                </div>
+                <h6 class="card-subtitle mb-2 text-muted">Order Completion Rate</h6>
+                {% if statistics is defined and statistics.completion_rate is defined %}
+                <h3 class="mb-0 text-warning">{{ statistics.completion_rate|round(1) }}%</h3>
+                {% else %}
+                <h3 class="mb-0 text-warning">--</h3>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Orders Accordion -->
+<div class="accordion" id="ordersAccordion">
+    {% for order in orders %}
+    <div class="accordion-item mb-3 border">
+        <h2 class="accordion-header" id="heading{{ loop.index }}">
+            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapse{{ loop.index }}" aria-expanded="false" aria-controls="collapse{{ loop.index }}">
+                <div class="d-flex justify-content-between align-items-center w-100 me-3">
+                    <span>
+                        <strong>Order #{{ order._id[-6:] }}</strong> - 
+                        {% if order.order_date %}
+                            {{ order.order_date.strftime('%b %d, %Y') if order.order_date is not string else order.order_date }}
+                        {% else %}
+                            Unknown date
+                        {% endif %}
+                    </span>
+                    <span class="badge rounded-pill bg-{% if order.status == 'pending' %}warning{% elif order.status == 'delivered' %}success{% elif order.status == 'cancelled' %}danger{% else %}primary{% endif %} ms-auto">
+                        {{ order.status|default('pending')|title }}
+                    </span>
+                    <span class="ms-3 text-primary fw-bold">${{ order.total_price|default(0)|round(2) }}</span>
+                </div>
+            </button>
+        </h2>
+        <div id="collapse{{ loop.index }}" class="accordion-collapse collapse" aria-labelledby="heading{{ loop.index }}" data-bs-parent="#ordersAccordion">
+            <div class="accordion-body">
+                <div class="row">
+                    <div class="col-md-8">
+                        <h5 class="mb-3">Order Items</h5>
+                        <div class="table-responsive">
+                            <table class="table table-bordered table-hover">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Product</th>
+                                        <th class="text-center">Price</th>
+                                        <th class="text-center">Quantity</th>
+                                        <th class="text-end">Subtotal</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for product in order.products|default([]) %}
+                                    <tr>
+                                        <td>{{ product.name|default('Unknown product') }}</td>
+                                        <td class="text-center">${{ product.price|default(0)|round(2) }}</td>
+                                        <td class="text-center">{{ product.quantity|default(1) }}</td>
+                                        <td class="text-end">${{ product.subtotal|default(product.price * product.quantity)|round(2) }}</td>
+                                    </tr>
+                                    {% endfor %}
+                                    <tr class="table-light">
+                                        <td colspan="3" class="text-end fw-bold">Total:</td>
+                                        <td class="text-end fw-bold">${{ order.total_price|default(0)|round(2) }}</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <h5 class="mb-3">Order Details</h5>
+                        <ul class="list-group mb-3">
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                <span>Status</span>
+                                <span class="badge rounded-pill bg-{% if order.status == 'pending' %}warning{% elif order.status == 'delivered' %}success{% elif order.status == 'cancelled' %}danger{% else %}primary{% endif %}">
+                                    {{ order.status|default('pending')|title }}
+                                </span>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                <span>Order Date</span>
+                                <span>
+                                    {% if order.order_date %}
+                                        {{ order.order_date.strftime('%b %d, %Y') if order.order_date is not string else order.order_date }}
+                                    {% else %}
+                                        Unknown date
+                                    {% endif %}
+                                </span>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                <span>Payment Method</span>
+                                <span>
+                                    {% if order.payment_method == 'credit_card' %}
+                                        Credit Card
+                                    {% elif order.payment_method == 'paypal' %}
+                                        PayPal
+                                    {% else %}
+                                        Cash on Delivery
+                                    {% endif %}
+                                </span>
+                            </li>
+                        </ul>
+                        
+                        {% if order.shipping_address is defined and order.shipping_address %}
+                        <h5 class="mb-3">Shipping Address</h5>
+                        <address>
+                            <strong>{{ order.shipping_address.full_name|default('') }}</strong><br>
+                            {{ order.shipping_address.address_line1|default('') }}<br>
+                            {% if order.shipping_address.address_line2 %}
+                            {{ order.shipping_address.address_line2 }}<br>
+                            {% endif %}
+                            {{ order.shipping_address.city|default('') }}, 
+                            {{ order.shipping_address.state|default('') }} 
+                            {{ order.shipping_address.postal_code|default('') }}<br>
+                            {{ order.shipping_address.country|default('') }}<br>
+                            <abbr title="Phone">P:</abbr> {{ order.shipping_address.phone|default('') }}
+                        </address>
+                        {% endif %}
+                        
+                        {% if order.status == 'delivered' %}
+                        <a href="{{ url_for('order.invoice', order_id=order._id) }}" class="btn btn-outline-primary w-100 mb-2">
+                            <i class="fas fa-file-invoice me-2"></i> Download Invoice
+                        </a>
+                        {% endif %}
+                        
+                        {% if order.status == 'pending' or order.status == 'processing' %}
+                        <form action="{{ url_for('order.cancel', order_id=order._id) }}" method="POST">
+                            <button type="submit" class="btn btn-outline-danger w-100" onclick="return confirm('Are you sure you want to cancel this order?')">
+                                <i class="fas fa-times-circle me-2"></i> Cancel Order
+                            </button>
+                        </form>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+<!-- Add this pagination section just before the {% else %} in the purchase_history.html template -->
+
+<!-- Pagination -->
+{% if total_pages > 1 %}
+<nav aria-label="Page navigation" class="mt-4">
+    <ul class="pagination justify-content-center">
+        {% if current_page > 1 %}
+        <li class="page-item">
+            <a class="page-link" href="{{ url_for('user.history', page=current_page-1) }}">
+                Previous
+            </a>
+        </li>
+        {% else %}
+        <li class="page-item disabled">
+            <span class="page-link">Previous</span>
+        </li>
+        {% endif %}
+        
+        {% for page_num in range(1, total_pages + 1) %}
+        <li class="page-item {% if page_num == current_page %}active{% endif %}">
+            <a class="page-link" href="{{ url_for('user.history', page=page_num) }}">
+                {{ page_num }}
+            </a>
+        </li>
+        {% endfor %}
+        
+        {% if current_page < total_pages %}
+        <li class="page-item">
+            <a class="page-link" href="{{ url_for('user.history', page=current_page+1) }}">
+                Next
+            </a>
+        </li>
+        {% else %}
+        <li class="page-item disabled">
+            <span class="page-link">Next</span>
+        </li>
+        {% endif %}
+    </ul>
+</nav>
+{% endif %}
+{% else %}
+<!-- No Orders -->
+<div class="text-center my-5 py-5">
+    <div class="mb-4">
+        <i class="fas fa-shopping-bag fa-5x text-muted"></i>
+    </div>
+    <h2>No purchase history yet</h2>
+    <p class="mb-4">You haven't made any purchases yet. Start shopping to see your order history here.</p>
+    <a href="{{ url_for('product.index') }}" class="btn btn-primary">
+        <i class="fas fa-shopping-basket me-2"></i> Start Shopping
+    </a>
+</div>
+{% endif %}
+{% endblock %}

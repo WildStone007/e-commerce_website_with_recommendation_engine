@@ -1,0 +1,296 @@
+{% extends "base.html" %}
+
+{% block title %}My Orders{% endblock %}
+
+{% block content %}
+<!-- Breadcrumb -->
+<nav aria-label="breadcrumb" class="mb-4">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{{ url_for('home') }}">Home</a></li>
+        <li class="breadcrumb-item active">My Orders</li>
+    </ol>
+</nav>
+
+<h1 class="mb-4">My Orders</h1>
+
+<!-- Order Stats -->
+<div class="row mb-4">
+    <div class="col-md-12">
+        <div class="card stats-card">
+            <div class="card-body">
+                <div class="row text-center">
+                    <div class="col">
+                        <div class="stats-item">
+                            <h3 class="mb-0">{{ status_counts.total|default(0) }}</h3>
+                            <p class="text-muted mb-0">Total Orders</p>
+                        </div>
+                    </div>
+                    <div class="col">
+                        <div class="stats-item">
+                            <h3 class="mb-0">{{ status_counts.pending|default(0) }}</h3>
+                            <p class="text-muted mb-0">Pending</p>
+                        </div>
+                    </div>
+                    <div class="col">
+                        <div class="stats-item">
+                            <h3 class="mb-0">{{ status_counts.processing|default(0) }}</h3>
+                            <p class="text-muted mb-0">Processing</p>
+                        </div>
+                    </div>
+                    <div class="col">
+                        <div class="stats-item">
+                            <h3 class="mb-0">{{ status_counts.shipped|default(0) }}</h3>
+                            <p class="text-muted mb-0">Shipped</p>
+                        </div>
+                    </div>
+                    <div class="col">
+                        <div class="stats-item">
+                            <h3 class="mb-0">{{ status_counts.delivered|default(0) }}</h3>
+                            <p class="text-muted mb-0">Delivered</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Filter Tabs -->
+<ul class="nav nav-tabs mb-4">
+    <li class="nav-item">
+        <a class="nav-link {{ 'active' if not request.args.get('status') }}" href="{{ url_for('order.index') }}">All Orders</a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link {{ 'active' if request.args.get('status') == 'pending' }}" href="{{ url_for('order.index', status='pending') }}">Pending</a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link {{ 'active' if request.args.get('status') == 'processing' }}" href="{{ url_for('order.index', status='processing') }}">Processing</a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link {{ 'active' if request.args.get('status') == 'shipped' }}" href="{{ url_for('order.index', status='shipped') }}">Shipped</a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link {{ 'active' if request.args.get('status') == 'delivered' }}" href="{{ url_for('order.index', status='delivered') }}">Delivered</a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link {{ 'active' if request.args.get('status') == 'cancelled' }}" href="{{ url_for('order.index', status='cancelled') }}">Cancelled</a>
+    </li>
+</ul>
+
+{% if orders %}
+<!-- Orders Table -->
+<div class="card mb-4">
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>Order ID</th>
+                        <th>Date</th>
+                        <th>Items</th>
+                        <th>Status</th>
+                        <th class="text-end">Total</th>
+                        <th class="text-center">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for order in orders %}
+                    <tr>
+                        <td>
+                            <a href="{{ url_for('order.detail', order_id=order.id) }}" class="text-decoration-none fw-bold">
+                                #{{ order.id[:8] }}
+                            </a>
+                        </td>
+                        <td>{{ order.order_date|format_date('%b %d, %Y') }}</td>
+                        <td>
+                            <div class="d-flex align-items-center">
+                                <span class="badge bg-secondary rounded-pill me-2">{{ order.products|length }}</span>
+                                <div class="product-thumbnails">
+                                    {% for product in order.products[:3] %}
+                                    <div class="product-thumbnail-small">
+                                        {% set prod = get_product(product.product_id) %}
+                                        {% if prod and prod.images and prod.images|length > 0 %}
+                                        <img src="{{ url_for('static', filename=prod.images[0]) }}" alt="{{ product.name }}" class="img-thumbnail">
+                                        {% else %}
+                                        <img src="{{ url_for('static', filename='images/product-placeholder.jpg') }}" alt="{{ product.name }}" class="img-thumbnail">
+                                        {% endif %}
+                                    </div>
+                                    {% endfor %}
+                                    {% if order.products|length > 3 %}
+                                    <div class="product-thumbnail-more">
+                                        <span>+{{ order.products|length - 3 }}</span>
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            {% if order.status == 'pending' %}
+                            <span class="badge bg-warning text-dark">Pending</span>
+                            {% elif order.status == 'processing' %}
+                            <span class="badge bg-info">Processing</span>
+                            {% elif order.status == 'shipped' %}
+                            <span class="badge bg-primary">Shipped</span>
+                            {% elif order.status == 'delivered' %}
+                            <span class="badge bg-success">Delivered</span>
+                            {% elif order.status == 'cancelled' %}
+                            <span class="badge bg-danger">Cancelled</span>
+                            {% else %}
+                            <span class="badge bg-secondary">{{ order.status|title }}</span>
+                            {% endif %}
+                        </td>
+                        <td class="text-end fw-bold">{{ order.total_price|currency }}</td>
+                        <td class="text-center">
+                            <div class="btn-group">
+                                <a href="{{ url_for('order.detail', order_id=order.id) }}" class="btn btn-sm btn-outline-primary">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                                {% if order.status == 'shipped' %}
+                                <a href="{{ url_for('order.track', order_id=order.id) }}" class="btn btn-sm btn-outline-info">
+                                    <i class="fas fa-truck"></i>
+                                </a>
+                                {% endif %}
+                                {% if order.status == 'pending' %}
+                                <a href="#" class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#cancelOrderModal-{{ order.id }}">
+                                    <i class="fas fa-times"></i>
+                                </a>
+                                {% endif %}
+                            </div>
+                            
+                            <!-- Cancel Order Modal -->
+                            {% if order.status == 'pending' %}
+                            <div class="modal fade" id="cancelOrderModal-{{ order.id }}" tabindex="-1" aria-labelledby="cancelOrderModalLabel-{{ order.id }}" aria-hidden="true">
+                                <div class="modal-dialog">
+                                    <div class="modal-content">
+                                        <div class="modal-header">
+                                            <h5 class="modal-title" id="cancelOrderModalLabel-{{ order.id }}">Cancel Order #{{ order.id[:8] }}</h5>
+                                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                        </div>
+                                        <div class="modal-body">
+                                            <p>Are you sure you want to cancel this order?</p>
+                                            <p><strong>Order #{{ order.id[:8] }}</strong> - {{ order.total_price|currency }}</p>
+                                            <p>This action cannot be undone.</p>
+                                        </div>
+                                        <div class="modal-footer">
+                                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                                            <form action="{{ url_for('order.cancel', order_id=order.id) }}" method="POST">
+                                                <button type="submit" class="btn btn-danger">Cancel Order</button>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Pagination -->
+{% if total_pages > 1 %}
+<nav aria-label="Page navigation">
+    <ul class="pagination justify-content-center">
+        {% if current_page > 1 %}
+        <li class="page-item">
+            <a class="page-link" href="{{ url_for('order.index', page=current_page-1, status=request.args.get('status')) }}">
+                Previous
+            </a>
+        </li>
+        {% else %}
+        <li class="page-item disabled">
+            <span class="page-link">Previous</span>
+        </li>
+        {% endif %}
+        
+        {% for page_num in range(1, total_pages + 1) %}
+        <li class="page-item {% if page_num == current_page %}active{% endif %}">
+            <a class="page-link" href="{{ url_for('order.index', page=page_num, status=request.args.get('status')) }}">
+                {{ page_num }}
+            </a>
+        </li>
+        {% endfor %}
+        
+        {% if current_page < total_pages %}
+        <li class="page-item">
+            <a class="page-link" href="{{ url_for('order.index', page=current_page+1, status=request.args.get('status')) }}">
+                Next
+            </a>
+        </li>
+        {% else %}
+        <li class="page-item disabled">
+            <span class="page-link">Next</span>
+        </li>
+        {% endif %}
+    </ul>
+</nav>
+{% endif %}
+
+{% else %}
+<!-- No Orders Found -->
+<div class="card">
+    <div class="card-body text-center p-5">
+        <i class="fas fa-shopping-bag fa-4x text-muted mb-3"></i>
+        <h3>No Orders Found</h3>
+        <p class="text-muted">You haven't placed any orders yet.</p>
+        <a href="{{ url_for('product.index') }}" class="btn btn-primary mt-3">
+            <i class="fas fa-shopping-cart me-2"></i> Start Shopping
+        </a>
+    </div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block styles %}
+<style>
+    .stats-card {
+        border: none;
+        background-color: #f8f9fa;
+    }
+    
+    .stats-item {
+        padding: 15px;
+        border-right: 1px solid #dee2e6;
+    }
+    
+    .stats-item:last-child {
+        border-right: none;
+    }
+    
+    .product-thumbnails {
+        display: flex;
+        align-items: center;
+    }
+    
+    .product-thumbnail-small {
+        width: 40px;
+        height: 40px;
+        margin-right: -10px;
+        border-radius: 5px;
+        overflow: hidden;
+        border: 2px solid #fff;
+    }
+    
+    .product-thumbnail-small img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+    
+    .product-thumbnail-more {
+        width: 40px;
+        height: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background-color: #f8f9fa;
+        border-radius: 5px;
+        border: 2px solid #fff;
+        font-size: 0.8rem;
+        color: #6c757d;
+    }
+</style>
+{% endblock %}

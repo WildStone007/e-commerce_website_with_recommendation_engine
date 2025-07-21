@@ -1,0 +1,271 @@
+{% extends "base.html" %}
+
+{% block title %}Edit Profile{% endblock %}
+
+{% block content %}
+<!-- Breadcrumb -->
+<nav aria-label="breadcrumb" class="mb-4">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{{ url_for('home') }}">Home</a></li>
+        <li class="breadcrumb-item"><a href="{{ url_for('user.profile') }}">My Profile</a></li>
+        <li class="breadcrumb-item active">Edit Profile</li>
+    </ol>
+</nav>
+
+<div class="row">
+    <!-- Sidebar Navigation -->
+    <div class="col-lg-3">
+        <div class="card mb-4">
+            <div class="card-header bg-primary text-white">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-user me-2"></i> {{ user.username }}
+                </h5>
+            </div>
+            <div class="card-body p-0">
+                <div class="list-group list-group-flush">
+                    <a href="{{ url_for('user.profile') }}" class="list-group-item list-group-item-action">
+                        <i class="fas fa-user-circle me-2"></i> Profile Overview
+                    </a>
+                    <a href="{{ url_for('user.edit_profile') }}" class="list-group-item list-group-item-action active">
+                        <i class="fas fa-edit me-2"></i> Edit Profile
+                    </a>
+                    <a href="{{ url_for('auth.change_password_route') }}" class="list-group-item list-group-item-action">
+                        <i class="fas fa-key me-2"></i> Change Password
+                    </a>
+                    <a href="{{ url_for('order.index') }}" class="list-group-item list-group-item-action">
+                        <i class="fas fa-box me-2"></i> My Orders
+                    </a>
+                    <a href="{{ url_for('user.history') }}" class="list-group-item list-group-item-action">
+                        <i class="fas fa-history me-2"></i> Purchase History
+                    </a>
+                    <a href="{{ url_for('user.activity') }}" class="list-group-item list-group-item-action">
+                        <i class="fas fa-chart-line me-2"></i> Activity Log
+                    </a>
+                    <a href="{{ url_for('auth.logout') }}" class="list-group-item list-group-item-action text-danger">
+                        <i class="fas fa-sign-out-alt me-2"></i> Logout
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Main Content -->
+    <div class="col-lg-9">
+        <div class="card mb-4">
+            <div class="card-header bg-primary text-white">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-edit me-2"></i> Edit Profile
+                </h5>
+            </div>
+            <div class="card-body">
+                <form action="{{ url_for('user.edit_profile') }}" method="POST" enctype="multipart/form-data">
+                    <div class="row">
+                        <!-- Profile Picture -->
+                        <div class="col-md-4 text-center mb-4">
+                            <div class="profile-picture-container mb-3">
+                                {% if user.profile_picture %}
+                                <img src="{{ url_for('static', filename=user.profile_picture) }}" alt="{{ user.username }}" class="img-fluid rounded-circle profile-pic" id="profile-preview">
+                                {% else %}
+                                <div class="profile-pic-placeholder" id="profile-preview-placeholder">
+                                    <i class="fas fa-user-circle fa-5x"></i>
+                                </div>
+                                <img src="" alt="{{ user.username }}" class="img-fluid rounded-circle profile-pic d-none" id="profile-preview">
+                                {% endif %}
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="profile_picture" class="form-label">Change Profile Picture</label>
+                                <input class="form-control form-control-sm" type="file" id="profile_picture" name="profile_picture" accept="image/*">
+                                <div class="form-text">Max file size: 2MB. Supported formats: JPG, PNG, GIF.</div>
+                            </div>
+                        </div>
+                        
+                        <!-- Profile Information -->
+                        <div class="col-md-8">
+                            <h5 class="mb-3">Account Information</h5>
+                            
+                            <div class="mb-3">
+                                <label for="username" class="form-label">Username</label>
+                                <input type="text" class="form-control" id="username" name="username" value="{{ user.username }}" required>
+                                <div class="form-text">Username can only contain letters, numbers, and underscores.</div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="email" class="form-label">Email Address</label>
+                                <input type="email" class="form-control" id="email" name="email" value="{{ user.email }}" required>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="full_name" class="form-label">Full Name</label>
+                                <input type="text" class="form-control" id="full_name" name="full_name" value="{{ user.full_name }}">
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="phone" class="form-label">Phone Number</label>
+                                <input type="tel" class="form-control" id="phone" name="phone" value="{{ user.phone }}">
+                            </div>
+                            
+                            <hr>
+                            
+                            <h5 class="mb-3">Address Information</h5>
+                            
+                            <div class="mb-3">
+                                <label for="street" class="form-label">Street Address</label>
+                                <input type="text" class="form-control" id="street" name="street" value="{{ user.address.street if user.address else '' }}">
+                            </div>
+                            
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <label for="city" class="form-label">City</label>
+                                    <input type="text" class="form-control" id="city" name="city" value="{{ user.address.city if user.address else '' }}">
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="state" class="form-label">State/Province</label>
+                                    <input type="text" class="form-control" id="state" name="state" value="{{ user.address.state if user.address else '' }}">
+                                </div>
+                            </div>
+                            
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <label for="postal_code" class="form-label">Postal Code</label>
+                                    <input type="text" class="form-control" id="postal_code" name="postal_code" value="{{ user.address.postal_code if user.address else '' }}">
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="country" class="form-label">Country</label>
+                                    <select class="form-select" id="country" name="country">
+                                        <option value="">Select Country</option>
+                                        <option value="US" {% if user.address and user.address.country == 'US' %}selected{% endif %}>United States</option>
+                                        <option value="CA" {% if user.address and user.address.country == 'CA' %}selected{% endif %}>Canada</option>
+                                        <option value="UK" {% if user.address and user.address.country == 'UK' %}selected{% endif %}>United Kingdom</option>
+                                        <option value="AU" {% if user.address and user.address.country == 'AU' %}selected{% endif %}>Australia</option>
+                                        <!-- Add more countries as needed -->
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <hr>
+                    
+                    <!-- Preferences -->
+                    <h5 class="mb-3">Preferences</h5>
+                    
+                    <div class="mb-3">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="receive_newsletter" name="receive_newsletter" {% if user.preferences and user.preferences.receive_newsletter %}checked{% endif %}>
+                            <label class="form-check-label" for="receive_newsletter">
+                                Receive our newsletter
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="receive_promotions" name="receive_promotions" {% if user.preferences and user.preferences.receive_promotions %}checked{% endif %}>
+                            <label class="form-check-label" for="receive_promotions">
+                                Receive promotional emails
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-4">
+                        <a href="{{ url_for('user.profile') }}" class="btn btn-outline-secondary">
+                            <i class="fas fa-times me-2"></i> Cancel
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save me-2"></i> Save Changes
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block styles %}
+<style>
+    .profile-picture-container {
+        position: relative;
+    }
+    
+    .profile-pic {
+        width: 150px;
+        height: 150px;
+        object-fit: cover;
+    }
+    
+    .profile-pic-placeholder {
+        width: 150px;
+        height: 150px;
+        margin: 0 auto;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background-color: #f8f9fa;
+        border-radius: 50%;
+        color: #6c757d;
+    }
+</style>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Profile picture preview
+        const profilePicInput = document.getElementById('profile_picture');
+        const profilePreview = document.getElementById('profile-preview');
+        const profilePlaceholder = document.getElementById('profile-preview-placeholder');
+        
+        if (profilePicInput && profilePreview) {
+            profilePicInput.addEventListener('change', function() {
+                if (this.files && this.files[0]) {
+                    const reader = new FileReader();
+                    
+                    reader.onload = function(e) {
+                        profilePreview.src = e.target.result;
+                        profilePreview.classList.remove('d-none');
+                        
+                        if (profilePlaceholder) {
+                            profilePlaceholder.classList.add('d-none');
+                        }
+                    }
+                    
+                    reader.readAsDataURL(this.files[0]);
+                }
+            });
+        }
+        
+        // Form validation
+        const form = document.querySelector('form');
+        form.addEventListener('submit', function(event) {
+            // Validate username
+            const username = document.getElementById('username').value;
+            if (!/^[a-zA-Z0-9_]{3,20}$/.test(username)) {
+                event.preventDefault();
+                alert('Username must be 3-20 characters and can only contain letters, numbers, and underscores.');
+                return;
+            }
+            
+            // Validate email
+            const email = document.getElementById('email').value;
+            if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+                event.preventDefault();
+                alert('Please enter a valid email address.');
+                return;
+            }
+            
+            // Validate file size
+            const profilePicture = document.getElementById('profile_picture');
+            if (profilePicture.files.length > 0) {
+                const fileSize = profilePicture.files[0].size / 1024 / 1024; // in MB
+                if (fileSize > 2) {
+                    event.preventDefault();
+                    alert('Profile picture exceeds maximum size of 2MB.');
+                    return;
+                }
+            }
+        });
+    });
+</script>
+{% endblock %}

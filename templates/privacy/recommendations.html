@@ -1,0 +1,391 @@
+{% extends 'base.html' %}
+
+{% block title %}Privacy of Recommendations{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-10">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h3 class="mb-0">Your Recommendation Privacy</h3>
+                </div>
+                <div class="card-body">
+                    <div class="alert {% if privacy_enabled %}alert-success{% else %}alert-warning{% endif %} mb-4">
+                        <h5 class="alert-heading">
+                            <i class="{% if privacy_enabled %}fas fa-shield-alt{% else %}fas fa-exclamation-triangle{% endif %} me-2"></i>
+                            {% if privacy_enabled %}
+                                Your recommendations are privacy-enhanced
+                            {% else %}
+                                Standard recommendations without privacy enhancement
+                            {% endif %}
+                        </h5>
+                        <p>
+                            {% if privacy_enabled %}
+                                Our recommendation system uses differential privacy with <strong>{{ privacy_level }}</strong> 
+                                protection to safeguard your personal preferences while still providing relevant recommendations.
+                            {% else %}
+                                Our recommendation system currently does not apply additional privacy protections. 
+                                Your preferences are used directly to generate personalized recommendations.
+                            {% endif %}
+                        </p>
+                    </div>
+                    
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <div class="card h-100">
+                                <div class="card-header bg-light">
+                                    <h5 class="mb-0">How Your Data is Used</h5>
+                                </div>
+                                <div class="card-body">
+                                    <p>Our recommendation system uses the following information to generate suggestions:</p>
+                                    <ul>
+                                        <li>Products you've viewed</li>
+                                        <li>Items you've purchased</li>
+                                        <li>Ratings you've given</li>
+                                        <li>Time spent viewing certain items</li>
+                                    </ul>
+                                    
+                                    {% if privacy_enabled %}
+                                    <p>
+                                        <strong>With privacy protection:</strong> We add mathematical noise to this data 
+                                        before processing it, making it difficult to identify your specific preferences
+                                        while still generating useful recommendations.
+                                    </p>
+                                    {% else %}
+                                    <p>
+                                        <strong>Without privacy enhancement:</strong> This data is used directly to 
+                                        find patterns and generate personalized recommendations.
+                                    </p>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <div class="card h-100">
+                                <div class="card-header bg-light">
+                                    <h5 class="mb-0">Understanding Differential Privacy</h5>
+                                </div>
+                                <div class="card-body">
+                                    <p>
+                                        Differential privacy is a mathematical framework that adds carefully calibrated
+                                        noise to data, making it difficult to identify specific individuals while 
+                                        preserving overall patterns.
+                                    </p>
+                                    
+                                    {% if privacy_enabled %}
+                                    <div class="mb-3">
+                                        <h6>Your Current Privacy Level: <span class="badge bg-primary">{{ privacy_level|title }}</span></h6>
+                                        <div class="progress" style="height: 25px;" id="privacyProgressBar" data-privacy-level="{{ privacy_level }}">
+                                            <div class="progress-bar bg-success" role="progressbar" style="width: 0%;" id="privacyProgressValue">
+                                                Loading...
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <p><strong>Privacy Mechanism:</strong> {{ privacy_mechanism|title }}</p>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <h5>Your Privacy Controls</h5>
+                        <p>You can choose how your data is used for recommendations:</p>
+                        
+                        <div class="form-check form-switch mb-3">
+                            <input class="form-check-input" type="checkbox" id="optOutSwitch" {% if opted_out %}checked{% endif %}>
+                            <label class="form-check-label" for="optOutSwitch">
+                                Opt out of personalized recommendations
+                            </label>
+                            <div class="form-text">
+                                When opted out, you'll only see popular items and trending products instead of personalized recommendations.
+                            </div>
+                        </div>
+                        
+                        <div id="optOutStatus" class="alert {% if opted_out %}alert-info{% else %}alert-success{% endif %} mt-2" style="display: none;">
+                            <p class="mb-0">
+                                <i class="fas fa-info-circle me-2"></i>
+                                <span id="optOutMessage">
+                                    {% if opted_out %}
+                                        You have opted out of personalized recommendations.
+                                    {% else %}
+                                        You are receiving personalized recommendations.
+                                    {% endif %}
+                                </span>
+                            </p>
+                        </div>
+                    </div>
+                    
+                    <div class="card mb-4">
+                        <div class="card-header bg-light">
+                            <h5 class="mb-0">Privacy-Utility Trade-off</h5>
+                        </div>
+                        <div class="card-body">
+                            <p>
+                                There's always a trade-off between privacy protection and recommendation quality.
+                                Higher privacy means your personal preferences are better protected, but recommendations
+                                might be slightly less personalized.
+                            </p>
+                            
+                            <div class="row mt-3">
+                                <div class="col-md-4 text-center">
+                                    <div class="card bg-light">
+                                        <div class="card-body">
+                                            <h6>High Privacy</h6>
+                                            <i class="fas fa-shield-alt fa-2x mb-2 text-success"></i>
+                                            <ul class="list-unstyled text-start">
+                                                <li><i class="fas fa-check text-success me-2"></i>Strong data protection</li>
+                                                <li><i class="fas fa-check text-success me-2"></i>Lower re-identification risk</li>
+                                                <li><i class="fas fa-times text-danger me-2"></i>Less personalized recommendations</li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="col-md-4 text-center">
+                                    <div class="card bg-light">
+                                        <div class="card-body">
+                                            <h6>Medium Privacy</h6>
+                                            <i class="fas fa-shield-alt fa-2x mb-2 text-primary"></i>
+                                            <ul class="list-unstyled text-start">
+                                                <li><i class="fas fa-check text-success me-2"></i>Good data protection</li>
+                                                <li><i class="fas fa-check text-success me-2"></i>Balanced approach</li>
+                                                <li><i class="fas fa-check text-success me-2"></i>Reasonably personalized</li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="col-md-4 text-center">
+                                    <div class="card bg-light">
+                                        <div class="card-body">
+                                            <h6>Low Privacy</h6>
+                                            <i class="fas fa-shield-alt fa-2x mb-2 text-warning"></i>
+                                            <ul class="list-unstyled text-start">
+                                                <li><i class="fas fa-times text-danger me-2"></i>Minimal data protection</li>
+                                                <li><i class="fas fa-check text-success me-2"></i>Higher accuracy</li>
+                                                <li><i class="fas fa-check text-success me-2"></i>Highly personalized recommendations</li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="card">
+                        <div class="card-header bg-light">
+                            <h5 class="mb-0">Frequently Asked Questions</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="accordion" id="privacyFAQ">
+                                <div class="accordion-item">
+                                    <h2 class="accordion-header" id="headingOne">
+                                        <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne" aria-expanded="true" aria-controls="collapseOne">
+                                            What is differential privacy?
+                                        </button>
+                                    </h2>
+                                    <div id="collapseOne" class="accordion-collapse collapse show" aria-labelledby="headingOne" data-bs-parent="#privacyFAQ">
+                                        <div class="accordion-body">
+                                            <p>
+                                                Differential privacy is a mathematical framework that adds controlled randomness
+                                                (noise) to data or algorithms to protect individual privacy while still allowing
+                                                useful patterns to be extracted. It provides a formal guarantee that the presence
+                                                or absence of a single user's data doesn't significantly change the output of an analysis.
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="accordion-item">
+                                    <h2 class="accordion-header" id="headingTwo">
+                                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseTwo" aria-expanded="false" aria-controls="collapseTwo">
+                                            Does privacy protection affect recommendation quality?
+                                        </button>
+                                    </h2>
+                                    <div id="collapseTwo" class="accordion-collapse collapse" aria-labelledby="headingTwo" data-bs-parent="#privacyFAQ">
+                                        <div class="accordion-body">
+                                            <p>
+                                                Yes, there is usually a trade-off between privacy protection and recommendation
+                                                quality. Higher privacy protection means adding more noise to the data, which can
+                                                reduce the accuracy of recommendations. However, modern techniques aim to minimize
+                                                this trade-off, and for many users, the slight reduction in recommendation quality
+                                                is worth the increased privacy protection.
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="accordion-item">
+                                    <h2 class="accordion-header" id="headingThree">
+                                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseThree" aria-expanded="false" aria-controls="collapseThree">
+                                            What data is used to generate recommendations?
+                                        </button>
+                                    </h2>
+                                    <div id="collapseThree" class="accordion-collapse collapse" aria-labelledby="headingThree" data-bs-parent="#privacyFAQ">
+                                        <div class="accordion-body">
+                                            <p>
+                                                Our recommendation system uses several types of data:
+                                            </p>
+                                            <ul>
+                                                <li>Your explicit ratings of products</li>
+                                                <li>Products you've viewed or purchased</li>
+                                                <li>Time spent viewing certain items</li>
+                                                <li>Similarities between products</li>
+                                            </ul>
+                                            <p>
+                                                When privacy protection is enabled, this data is processed with differential
+                                                privacy techniques before being used to generate recommendations.
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="accordion-item">
+                                    <h2 class="accordion-header" id="headingFour">
+                                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseFour" aria-expanded="false" aria-controls="collapseFour">
+                                            What happens if I opt out of personalized recommendations?
+                                        </button>
+                                    </h2>
+                                    <div id="collapseFour" class="accordion-collapse collapse" aria-labelledby="headingFour" data-bs-parent="#privacyFAQ">
+                                        <div class="accordion-body">
+                                            <p>
+                                                If you opt out of personalized recommendations, you'll still see product
+                                                recommendations, but they will be based on overall popularity and trending items
+                                                rather than your personal preferences. Your browsing history and purchase data
+                                                won't be used to generate recommendations specifically for you.
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="accordion-item">
+                                    <h2 class="accordion-header" id="headingFive">
+                                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseFive" aria-expanded="false" aria-controls="collapseFive">
+                                            How does the {{ privacy_mechanism }} mechanism work?
+                                        </button>
+                                    </h2>
+                                    <div id="collapseFive" class="accordion-collapse collapse" aria-labelledby="headingFive" data-bs-parent="#privacyFAQ">
+                                        <div class="accordion-body">
+                                            {% if privacy_mechanism == 'laplace' %}
+                                            <p>
+                                                The Laplace mechanism adds random noise drawn from a Laplace distribution to your data.
+                                                This particular type of noise is carefully calibrated to provide strong privacy guarantees
+                                                while minimizing the impact on data utility. It's well-suited for numeric data like ratings
+                                                and is a general-purpose privacy mechanism.
+                                            </p>
+                                            {% elif privacy_mechanism == 'gaussian' %}
+                                            <p>
+                                                The Gaussian mechanism adds random noise drawn from a normal (Gaussian) distribution to your data.
+                                                This mechanism is often preferred for larger datasets and can provide slightly better utility
+                                                than Laplace noise in some cases, while still maintaining strong privacy guarantees.
+                                            </p>
+                                            {% elif privacy_mechanism == 'randomized_response' %}
+                                            <p>
+                                                Randomized Response is a privacy technique originally developed for sensitive surveys.
+                                                In our recommendation system, it works by randomly changing your preferences with a certain
+                                                probability. This makes it impossible to know for sure what your true preferences are,
+                                                while still maintaining overall patterns in the data.
+                                            </p>
+                                            {% else %}
+                                            <p>
+                                                Our privacy mechanism adds calibrated noise to your preference data before it's used
+                                                in the recommendation system. This makes it difficult to identify your specific preferences
+                                                while still allowing the system to generate useful recommendations.
+                                            </p>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-footer text-muted">
+                    <i class="fas fa-info-circle me-1"></i>
+                    Our privacy settings are regularly reviewed and updated to protect your data while providing the best possible experience.
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Set privacy progress bar width using JavaScript instead of inline CSS
+        const privacyProgressBar = document.getElementById('privacyProgressBar');
+        const privacyProgressValue = document.getElementById('privacyProgressValue');
+        
+        if (privacyProgressBar && privacyProgressValue) {
+            const privacyLevel = privacyProgressBar.getAttribute('data-privacy-level');
+            let width = 33; // Default for low
+            
+            if (privacyLevel === 'high') {
+                width = 100;
+            } else if (privacyLevel === 'medium') {
+                width = 66;
+            }
+            
+            privacyProgressValue.style.width = width + '%';
+            privacyProgressValue.textContent = privacyLevel.charAt(0).toUpperCase() + privacyLevel.slice(1) + ' Privacy';
+        }
+        
+        // Show the opt-out status initially
+        const optOutStatus = document.getElementById('optOutStatus');
+        if (optOutStatus) {
+            optOutStatus.style.display = 'block';
+        }
+        
+        // Handle opt-out toggle
+        const optOutSwitch = document.getElementById('optOutSwitch');
+        if (optOutSwitch) {
+            optOutSwitch.addEventListener('change', function() {
+                const optOut = this.checked;
+                
+                fetch('/api/privacy/opt-out', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        opt_out: optOut
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // Update the message
+                        const optOutMessage = document.getElementById('optOutMessage');
+                        if (optOutMessage) {
+                            optOutMessage.textContent = data.message;
+                        }
+                        
+                        // Update the alert style
+                        const optOutStatus = document.getElementById('optOutStatus');
+                        if (optOutStatus) {
+                            optOutStatus.className = data.opted_out ? 
+                                'alert alert-info mt-2' : 'alert alert-success mt-2';
+                            optOutStatus.style.display = 'block';
+                        }
+                    } else {
+                        alert('Error: ' + data.message);
+                        // Reset the switch to its previous state
+                        optOutSwitch.checked = !optOut;
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('An error occurred while updating your privacy settings');
+                    // Reset the switch to its previous state
+                    optOutSwitch.checked = !optOut;
+                });
+            });
+        }
+    });
+</script>
+{% endblock %}

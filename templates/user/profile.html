@@ -1,0 +1,373 @@
+{% extends "base.html" %}
+
+{% block title %}My Profile{% endblock %}
+
+{% block content %}
+<!-- Breadcrumb -->
+<nav aria-label="breadcrumb" class="mb-4">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{{ url_for('home') }}">Home</a></li>
+        <li class="breadcrumb-item active">My Profile</li>
+    </ol>
+</nav>
+
+<div class="row">
+    <!-- Sidebar Navigation -->
+    <div class="col-lg-3">
+        <div class="card mb-4">
+            <div class="card-header bg-primary text-white">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-user me-2"></i> {{ user.username }}
+                </h5>
+            </div>
+            <div class="card-body p-0">
+                <div class="list-group list-group-flush">
+                    <a href="{{ url_for('user.profile') }}" class="list-group-item list-group-item-action active">
+                        <i class="fas fa-user-circle me-2"></i> Profile Overview
+                    </a>
+                    <a href="{{ url_for('user.edit_profile') }}" class="list-group-item list-group-item-action">
+                        <i class="fas fa-edit me-2"></i> Edit Profile
+                    </a>
+                    <a href="{{ url_for('auth.change_password_route') }}" class="list-group-item list-group-item-action">
+                        <i class="fas fa-key me-2"></i> Change Password
+                    </a>
+                    <a href="{{ url_for('order.index') }}" class="list-group-item list-group-item-action">
+                        <i class="fas fa-box me-2"></i> My Orders
+                    </a>
+                    <a href="{{ url_for('user.history') }}" class="list-group-item list-group-item-action">
+                        <i class="fas fa-history me-2"></i> Purchase History
+                    </a>
+                    <a href="{{ url_for('user.activity') }}" class="list-group-item list-group-item-action">
+                        <i class="fas fa-chart-line me-2"></i> Activity Log
+                    </a>
+                    <a href="{{ url_for('auth.logout') }}" class="list-group-item list-group-item-action text-danger">
+                        <i class="fas fa-sign-out-alt me-2"></i> Logout
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Main Content -->
+    <div class="col-lg-9">
+        <!-- Profile Overview -->
+        <div class="card mb-4">
+            <div class="card-header bg-primary text-white">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-user-circle me-2"></i> Profile Overview
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <!-- Profile Picture -->
+                    <div class="col-md-4 text-center mb-4 mb-md-0">
+                        {% if user.profile_picture %}
+                        <img src="{{ url_for('static', filename=user.profile_picture) }}" alt="{{ user.username }}" class="img-fluid rounded-circle mb-3 profile-pic">
+                        {% else %}
+                        <div class="profile-pic-placeholder mb-3">
+                            <i class="fas fa-user-circle fa-5x"></i>
+                        </div>
+                        {% endif %}
+                        <h4 class="mb-0">{{ user.full_name if user.full_name else user.username }}</h4>
+                        <p class="text-muted">Member since {{ user.created_at|format_date('%B %d, %Y') }}</p>
+                        <a href="{{ url_for('user.edit_profile') }}" class="btn btn-sm btn-primary">
+                            <i class="fas fa-edit me-1"></i> Edit Profile
+                        </a>
+                    </div>
+                    
+                    <!-- Profile Details -->
+                    <div class="col-md-8">
+                        <h4 class="mb-3">Account Information</h4>
+                        <table class="table">
+                            <tbody>
+                                <tr>
+                                    <th>Username:</th>
+                                    <td>{{ user.username }}</td>
+                                </tr>
+                                <tr>
+                                    <th>Email:</th>
+                                    <td>{{ user.email }}</td>
+                                </tr>
+                                {% if user.phone %}
+                                <tr>
+                                    <th>Phone:</th>
+                                    <td>{{ user.phone }}</td>
+                                </tr>
+                                {% endif %}
+                                {% if user.full_name %}
+                                <tr>
+                                    <th>Full Name:</th>
+                                    <td>{{ user.full_name }}</td>
+                                </tr>
+                                {% endif %}
+                                {% if user.address %}
+                                <tr>
+                                    <th>Address:</th>
+                                    <td>
+                                        {{ user.address.street }}<br>
+                                        {% if user.address.city %}{{ user.address.city }}, {% endif %}
+                                        {% if user.address.state %}{{ user.address.state }} {% endif %}
+                                        {% if user.address.postal_code %}{{ user.address.postal_code }}{% endif %}<br>
+                                        {% if user.address.country %}{{ user.address.country }}{% endif %}
+                                    </td>
+                                </tr>
+                                {% endif %}
+                                {% if user.last_login %}
+                                <tr>
+                                    <th>Last Login:</th>
+                                    <td>{{ user.last_login|format_date('%B %d, %Y %H:%M') }}</td>
+                                </tr>
+                                {% endif %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- User Statistics -->
+        <div class="card mb-4">
+            <div class="card-header bg-light">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-chart-bar me-2"></i> Your Shopping Statistics
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-3 text-center mb-3 mb-md-0">
+                        <div class="stat-item">
+                            <div class="display-5 text-primary">{{ stats.total_orders }}</div>
+                            <div class="text-muted">Orders Placed</div>
+                        </div>
+                    </div>
+                    <div class="col-md-3 text-center mb-3 mb-md-0">
+                        <div class="stat-item">
+                            <div class="display-5 text-primary">{{ stats.total_spent|currency }}</div>
+                            <div class="text-muted">Total Spent</div>
+                        </div>
+                    </div>
+                    <div class="col-md-3 text-center mb-3 mb-md-0">
+                        <div class="stat-item">
+                            <div class="display-5 text-primary">{{ stats.total_views }}</div>
+                            <div class="text-muted">Products Viewed</div>
+                        </div>
+                    </div>
+                    <div class="col-md-3 text-center">
+                        <div class="stat-item">
+                            <div class="display-5 text-primary">{{ stats.unique_views }}</div>
+                            <div class="text-muted">Unique Products</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Recent Orders -->
+        {% if recent_orders %}
+        <div class="card mb-4">
+            <div class="card-header bg-light">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-box me-2"></i> Recent Orders
+                </h5>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Order ID</th>
+                                <th>Date</th>
+                                <th>Status</th>
+                                <th class="text-end">Total</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for order in recent_orders %}
+                            <tr>
+                                <td><a href="{{ url_for('order.detail', order_id=order.id) }}" class="text-decoration-none">#{{ order.id[:8] }}</a></td>
+                                <td>{{ order.order_date|format_date('%b %d, %Y') }}</td>
+                                <td>
+                                    {% if order.status == 'pending' %}
+                                    <span class="badge bg-warning text-dark">Pending</span>
+                                    {% elif order.status == 'processing' %}
+                                    <span class="badge bg-info">Processing</span>
+                                    {% elif order.status == 'shipped' %}
+                                    <span class="badge bg-primary">Shipped</span>
+                                    {% elif order.status == 'delivered' %}
+                                    <span class="badge bg-success">Delivered</span>
+                                    {% elif order.status == 'cancelled' %}
+                                    <span class="badge bg-danger">Cancelled</span>
+                                    {% else %}
+                                    <span class="badge bg-secondary">{{ order.status|title }}</span>
+                                    {% endif %}
+                                </td>
+                                <td class="text-end">{{ order.total_price|currency }}</td>
+                                <td class="text-center">
+                                    <a href="{{ url_for('order.detail', order_id=order.id) }}" class="btn btn-sm btn-outline-primary">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="card-footer text-center">
+                <a href="{{ url_for('order.index') }}" class="btn btn-sm btn-outline-primary">
+                    View All Orders
+                </a>
+            </div>
+        </div>
+        {% endif %}
+        
+        <!-- Recent Activity -->
+        {% if activity %}
+        <div class="card mb-4">
+            <div class="card-header bg-light">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-history me-2"></i> Recent Activity
+                </h5>
+            </div>
+            <div class="card-body p-0">
+                <ul class="list-group list-group-flush">
+                    {% for item in activity %}
+                    <li class="list-group-item d-flex align-items-center">
+                        <div class="me-3">
+                            {% if item.product.image %}
+                            <img src="{{ url_for('static', filename=item.product.image) }}" class="img-thumbnail activity-thumbnail" alt="{{ item.product.name }}">
+                            {% else %}
+                            <img src="{{ url_for('static', filename='images/product-placeholder.jpg') }}" class="img-thumbnail activity-thumbnail" alt="{{ item.product.name }}">
+                            {% endif %}
+                        </div>
+                        <div class="flex-grow-1">
+                            <div class="d-flex justify-content-between">
+                                <h6 class="mb-0">
+                                    {% if item.type == 'purchase' %}
+                                    <i class="fas fa-shopping-cart text-success me-2"></i>
+                                    {% elif item.type == 'view' %}
+                                    <i class="fas fa-eye text-info me-2"></i>
+                                    {% elif item.type == 'add_to_cart' %}
+                                    <i class="fas fa-cart-plus text-primary me-2"></i>
+                                    {% elif item.type == 'rating' %}
+                                    <i class="fas fa-star text-warning me-2"></i>
+                                    {% else %}
+                                    <i class="fas fa-history text-secondary me-2"></i>
+                                    {% endif %}
+                                    
+                                    {% if item.type == 'purchase' %}
+                                    You purchased
+                                    {% elif item.type == 'view' %}
+                                    You viewed
+                                    {% elif item.type == 'add_to_cart' %}
+                                    You added to cart
+                                    {% elif item.type == 'rating' %}
+                                    You rated
+                                    {% else %}
+                                    You interacted with
+                                    {% endif %}
+                                    <a href="{{ url_for('product.detail', product_id=item.product.id) }}" class="text-decoration-none">{{ item.product.name }}</a>
+                                </h6>
+                                <small class="text-muted">{{ item.timestamp|format_date('%b %d, %H:%M') }}</small>
+                            </div>
+                            <small class="text-muted">{{ item.product.price|currency }}</small>
+                        </div>
+                    </li>
+                    {% endfor %}
+                </ul>
+            </div>
+            <div class="card-footer text-center">
+                <a href="{{ url_for('user.activity') }}" class="btn btn-sm btn-outline-primary">
+                    View All Activity
+                </a>
+            </div>
+        </div>
+        {% endif %}
+        
+        <!-- Recommended Products -->
+        {% if recommendations %}
+        <div class="card mb-4">
+            <div class="card-header bg-light">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-thumbs-up me-2"></i> Recommended For You
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row row-cols-1 row-cols-md-2 row-cols-lg-4 g-3">
+                    {% for product in recommendations %}
+                    <div class="col">
+                        <div class="card h-100 product-card">
+                            {% if product.images and product.images|length > 0 %}
+                            <img src="{{ url_for('static', filename=product.images[0]) }}" class="card-img-top" alt="{{ product.name }}">
+                            {% else %}
+                            <img src="{{ url_for('static', filename='images/product-placeholder.jpg') }}" class="card-img-top" alt="{{ product.name }}">
+                            {% endif %}
+                            
+                            <div class="card-body">
+                                <h6 class="card-title">{{ product.name }}</h6>
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <span class="fw-bold text-primary">{{ product.price|currency }}</span>
+                                    <a href="{{ url_for('product.detail', product_id=product._id) }}" class="btn btn-sm btn-outline-primary">
+                                        <i class="fas fa-eye"></i> View
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block styles %}
+<style>
+    .profile-pic {
+        width: 150px;
+        height: 150px;
+        object-fit: cover;
+    }
+    
+    .profile-pic-placeholder {
+        width: 150px;
+        height: 150px;
+        margin: 0 auto;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background-color: #f8f9fa;
+        border-radius: 50%;
+        color: #6c757d;
+    }
+    
+    .stat-item {
+        padding: 15px;
+        background-color: #f8f9fa;
+        border-radius: 5px;
+    }
+    
+    .activity-thumbnail {
+        width: 50px;
+        height: 50px;
+        object-fit: cover;
+    }
+    
+    .product-card {
+        transition: all 0.3s ease;
+    }
+    
+    .product-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+    }
+    
+    .product-card .card-img-top {
+        height: 150px;
+        object-fit: cover;
+    }
+</style>
+{% endblock %}

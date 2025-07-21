@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+
+{% block title %}User Activity{% endblock %}
+
+{% block content %}
+<div class="container">
+  <h1>Your Activity</h1>
+  
+  {% if activity %}
+    <div class="activity-list">
+      {% for item in activity %}
+        <div class="activity-item">
+          <p>
+            <strong>{{ item.type|title }}</strong>
+            {% if item.product %}
+              <a href="{{ url_for('product.detail', product_id=item.product._id) }}">{{ item.product.name }}</a>
+            {% endif %}
+            <small class="text-muted">{{ item.timestamp|format_date('%b %d, %Y') }}</small>
+          </p>
+        </div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <p>No activity found.</p>
+  {% endif %}
+</div>
+{% endblock %}
